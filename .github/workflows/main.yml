@@ -16,18 +16,22 @@ jobs:
       with:
         python-version: '3.10'
 
-    # Manually cache the folder where pip installs everything
+    # Cache a specific local directory we control
     - name: Cache Packages
       id: cache-pip
       uses: actions/cache@v4
       with:
-        path: ~/.local/lib/python3.10/site-packages
-        key: ${{ runner.os }}-maigret-v1
+        path: ./custom_packages
+        key: ${{ runner.os }}-maigret-v2
 
-    # Only run pip install if the cache missed
+    # Force pip to install directly into our cached directory if it's not already there
     - name: Install Maigret
       if: steps.cache-pip.outputs.cache-hit != 'true'
-      run: pip install maigret
+      run: pip install maigret --target=./custom_packages
 
+    # Tell Python to look inside our custom directory, then run Maigret
     - name: Run Maigret Scan
-      run: maigret ${{ github.event.inputs.username }} -a
+      run: |
+        export PYTHONPATH=$PYTHONPATH:$(pwd)/custom_packages
+        export PATH=$PATH:$(pwd)/custom_packages/bin
+        python -m maigret ${{ github.event.inputs.username }} -a
