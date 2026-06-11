@@ -47,4 +47,4 @@ jobs:
         [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
         
         # Execute Maigret
-        maigret ${{ github.event.inputs.username }}
+        maigret ${{ github.event.inputs.username }} -a
