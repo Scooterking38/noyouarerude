@@ -1,0 +1,45 @@
+name: Run Maigret OSINT Scan (Windows)
+
+on:
+  workflow_dispatch:
+    inputs:
+      username:
+        description: 'The username to search for'
+        required: true
+
+jobs:
+  osint_scan:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Extract Maigret Zip
+      shell: powershell
+      run: |
+        # Find the zip file matching the pattern
+        $zipFile = Get-ChildItem -Filter "maigret*.zip" | Select-Object -First 1
+        if ($null -eq $zipFile) {
+            Write-Error "No zip file matching maigret*.zip found in the repository root!"
+            exit 1
+        }
+        Write-Output "Extracting $($zipFile.Name)..."
+        Expand-Archive -Path $zipFile.FullName -DestinationPath .\maigret_source -Force
+
+    - name: Build and Install
+      shell: powershell
+      run: |
+        python -m pip install --upgrade pip
+        # Navigate into the extracted folder to run the install
+        cd .\maigret_source\*
+        pip install .
+
+    - name: Run Maigret Scan
+      shell: powershell
+      run: |
+        maigret ${{ github.event.inputs.username }}
