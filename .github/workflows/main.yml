@@ -22,7 +22,6 @@ jobs:
     - name: Extract Maigret Zip
       shell: powershell
       run: |
-        # Find the zip file matching the pattern
         $zipFile = Get-ChildItem -Filter "maigret*.zip" | Select-Object -First 1
         if ($null -eq $zipFile) {
             Write-Error "No zip file matching maigret*.zip found in the repository root!"
@@ -35,9 +34,13 @@ jobs:
       shell: powershell
       run: |
         python -m pip install --upgrade pip
-        # Navigate into the extracted folder to run the install
-        cd .\maigret_source\*
-        pip install .
+        
+        # Dynamically locate the inner folder containing setup.py / pyproject.toml
+        $srcFolder = Get-ChildItem -Path .\maigret_source | Where-Object { $_.PSIsContainer } | Select-Object -First 1
+        cd $srcFolder.FullName
+        
+        # Install in editable mode so it can locate settings.json relatively
+        pip install -e .
 
     - name: Run Maigret Scan
       shell: powershell
